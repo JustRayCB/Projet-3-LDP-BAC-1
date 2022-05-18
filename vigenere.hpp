@@ -30,7 +30,7 @@ void decode(const string &cypher, struct Clef *clef, string &plain);
  * @param l la longueur de la clé
  * @return A pointer to a struct Clef
  */
-struct Clef *trouve_candidat(const string &cypher, size_t l);
+struct Clef *trouve_candidat(const string &cypher, const size_t &l);
 
 /**
  * Déchiffre un message encodé à l'aide du chiffre de Vigenère sans avoir
@@ -41,7 +41,7 @@ struct Clef *trouve_candidat(const string &cypher, size_t l);
  * @param l Chiffre que l'utilisateur à choisi pour faire l'attaque du chiffre de Vigenere
  * @return None
  */
-void attack(const string &cypher, string &plain, size_t l);
+void attack(const string &cypher, string &plain, const size_t &l);
 
 
 //      ****Function to find a candidate****
@@ -53,7 +53,7 @@ void attack(const string &cypher, string &plain, size_t l);
  * @param size Number of column in which we will divide the text
  * @return a vector which all the values are the different column of the divided text
  */
-vector<string> divideText(const string& cypher, size_t size);
+vector<string> divideText(const string& cypher, const size_t &size);
 
 /**
  * Find the most used alphabetic letter in a string
@@ -69,14 +69,9 @@ tuple<char, float> findMostOccurence(string& myString);
 */
 char transformLetter(char& letter);
 
-/**
- * Count the frequency of the letter E in the text
- *
- * @param cypher Text we will analyze
- * @return the frequency of the letter E
- */
-double findOcuurencee(const string &cypher);
+size_t findOccurenceWord(const string &text, const string &word);
 
+string findRepeatedString(const string &text);
 
 //      ****Use to decrypt****
 
@@ -104,8 +99,10 @@ tuple<string, vector<size_t>> read_file(const string& filename);
  * @param pw Password to associate
  * @return the associated password as a string
  */
-string associate_pw(const string& text, string pw);
+string associate_pw(const string& text, const string& pw);
 
+
+string associate_pw(const string &text, const struct Clef *clef);
 /**
  * * Decrypt a letter with the other
  *
@@ -113,7 +110,7 @@ string associate_pw(const string& text, string pw);
  * @param crypt encrypted letter
  * @return The decrypted letter
  */
-char associate_letter(char key, char crypt);
+char associate_letter(const char &key, const char &crypt);
 
 /**
  * Decrypt the text with the password
@@ -122,7 +119,7 @@ char associate_letter(char key, char crypt);
  * @param mdp Password
  * @return string decrypted
  */
-string decrypt(string text, string mdp);
+string decrypt(const string &text, const string &mdp);
 
 /**
  * Will write a text  line per line in a file

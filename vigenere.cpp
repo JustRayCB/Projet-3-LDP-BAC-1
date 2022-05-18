@@ -26,13 +26,12 @@ struct Clef {
 };
 
 string decryptedText(const string &cypher, struct Clef *clef) {
-    string myMdp;
+    /*string myMdp;
     for (size_t idx = 0; idx < clef->longueur; idx++) {
         myMdp.push_back(clef->clef[idx]);
-    }
-    cout << myMdp << endl;
+    }*/
 
-    string realPswd = associate_pw(cypher, myMdp);
+    string realPswd = associate_pw(cypher, clef);
 
     string decrypted = decrypt(cypher, realPswd);
 
@@ -46,7 +45,7 @@ void decode(const string &cypher, struct Clef *clef, string &plain) {
     write_file(plain, decrypted, lines);
 }
 
-struct Clef *trouve_candidat(const string &cypher, size_t l) {
+struct Clef *trouve_candidat(const string &cypher, const size_t &l) {
     char *tempTable = new char[l];
     vector<string> columns;
     float error = 0;
@@ -65,45 +64,32 @@ struct Clef *trouve_candidat(const string &cypher, size_t l) {
     return newClef;
 }
 
-double findOcuurencee(const string &cypher) {
-    size_t lenText = 0;
-    size_t nbE = 0;     //Number of E
-    for (const char &letter: cypher) {
-        if (65 <= int(letter) and int(letter) <= 90) {
-            lenText++;
-            if (int(letter) == 69) {
-                nbE++;
-            }
-        }
-    }
-    double frequency = (double(nbE) / double(lenText)) * 100;
-    return frequency;
-}
 
-void attack(const string &cypher, string &plain, const size_t l) {
+void attack(const string &cypher, string &plain, const size_t &l) {
     Clef myKey{};   //Key considered as better candidat
-    Clef temp{};    //temporary key
     myKey.erreur = 100.0;
-
-    double myDelta = 100.0;
     for (size_t idx = 1; idx <= l; idx++) {
         Clef *newKey = trouve_candidat(cypher, idx);
-        if (newKey->erreur < myKey.erreur) {    // useless to test a key that have a bigger error that the current key
-            temp.clef = newKey->clef;
-            temp.erreur = newKey->erreur;
-            temp.longueur = newKey->longueur;
-            string decrypted = decryptedText(cypher, &temp);    //Decrypted text
-            double percentE = findOcuurencee(decrypted);      //Frequency of the E in decrypted
-            double generalPercentE = 17.115;                        // General percentage of E in a string in French
-            double delta = abs(generalPercentE - percentE);
-            if (delta < myDelta) {
-                myKey.clef = temp.clef;
-                myKey.erreur = temp.erreur;
-                myKey.longueur = temp.longueur;
-                myDelta = delta;
-            } else {
-                delete[] newKey;
+        if (idx >=20){
+            string patternMyKey = findRepeatedString(myKey.clef);
+            cout << patternMyKey << endl;
+            string key;
+            if (!patternMyKey.empty()) {
+                for (size_t index = 0; idx < newKey->longueur; index++) {
+                    key.push_back(newKey->clef[index]);
+                }
+                size_t count = findOccurenceWord(key, patternMyKey);
+                if (count * patternMyKey.size() == key.size()) {
+                    cout<<"here" << endl;
+                    break;          //same pw
+                }
             }
+
+        }
+        if (newKey->erreur < myKey.erreur) {    // useless to test a key that have a bigger error that the current key
+            myKey.clef = newKey->clef;
+            myKey.erreur = newKey->erreur;
+            myKey.longueur = newKey->longueur;
         }
         else{
             delete[] newKey;
@@ -113,20 +99,44 @@ void attack(const string &cypher, string &plain, const size_t l) {
 
 }
 
-vector<string> divideText(const string &cypher, const size_t size) {
-    string temp = cypher;
-    temp.erase(remove(temp.begin(), temp.end(), ' '), temp.end());    // remove all spaces in the string
-    vector<string> column(size);
-    size_t idx = 0;     //Column index we are currently on
-    size_t taille = temp.size();
-    size_t parse = 0;   // Index letter we are currently on
-    while (parse < taille) {
-        size_t letter = idx % size;     // Column index we want to insert the letter
-        if (65 <= int(temp[parse]) and int(temp[parse]) <= 90) {
-            column[letter].push_back(temp[parse]);
-            idx++;
+size_t findOccurenceWord(const string &text, const string &word){
+    size_t lenText = text.size();
+    size_t lenWord = word.size();
+    size_t idx = 0;
+    size_t res = 0;
+    while (idx < lenText) {
+        string sub = text.substr(idx, lenWord);
+        if (sub != word) {
+            break;
         }
-        parse++;
+        res++;
+        idx += lenWord;
+    }
+    return res;
+}
+string findRepeatedString(const string &text) {
+    size_t lenText = text.size();
+    size_t idx = 1;
+    while (idx < lenText / 2) {
+        string sub = text.substr(0, idx);
+        size_t count = findOccurenceWord(text, sub);
+        if (count * sub.size() == lenText) {
+            return sub;
+        }
+        idx ++;
+    }
+    return "";
+}
+
+vector<string> divideText(const string &cypher, const size_t &size) {
+    vector<string> column(size);
+    size_t idx = 0;     //Index of the letter
+    for (char letter: cypher){
+        size_t columnIdx = idx%size;
+        if (65 <= int(letter) and int(letter) <= 90){
+            column[columnIdx].push_back(letter);
+            idx ++;
+        }
     }
     return column;
 }
@@ -180,63 +190,57 @@ tuple<string, vector<size_t>> read_file(const string &filename) {
     return {temp, lengthPhrase};
 }
 
-string associate_pw(const string &text, string pw) {
-    string temp = text;
-    temp.erase(remove(temp.begin(), temp.end(), ' '), temp.end());  // remove all the spaces of the string
-    string sepPw;
-    size_t idx = 0;         // will be the index of the letter in the password (pw)
+string associate_pw(const string &text, const string& pw) {
+    size_t idx = 0;
+    string newPw;
     size_t lenPw = pw.size();
-    for (char &letter: temp) {    // will be used to associate a pw according the length and the diff char of the pswrd
-
-        if (65 <= int(letter) and int(letter) <= 90) {   // if letter is alphabetic
-            sepPw += pw[idx]; // add a letter to sep_pw from pw
-            idx += 1;
-        } else if (not isalpha(letter)) {
-            sepPw += letter;
+    for (char letter: text){
+        if (int(letter) >= 65 and int(letter) <= 90){
+            newPw+=pw[idx];
+            idx ++;
         }
-
-        if (idx == lenPw) { // if we reached the en of pw
-            idx = 0;       // we return to the beginning of pw
+        else{
+            newPw += letter;
         }
-    }
-    size_t lenSep = sepPw.size();
-    pw = "";
-    idx = 0;
-    for (char i: text) {        // will be used to create the real pswrd with spaces, special characters etc...
-        char myLetter;
-        myLetter = i;
-        if (isspace(myLetter)) {
-            pw += " ";
-        } else if (!isspace(myLetter)) {
-            pw += sepPw[idx];
-            idx += 1;
-        }
-        if (idx == lenSep) {
+        if (idx == lenPw){
             idx = 0;
         }
     }
-    return pw;
+    return newPw;
 }
 
-char associate_letter(char key, char crypt) {
-    crypt = char(toupper(crypt));     // upper case letter
-    key = char(toupper(key));         // upper case letter
-    vector<char> allLetters(
-            {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U',
-             'V', 'W', 'X', 'Y', 'Z'}); // vector with all the alphabetic characters
-    auto found = find(allLetters.begin(), allLetters.end(), key);     // find the key index in the vector
-    vector<char> my_line_1(allLetters.begin() + distance(allLetters.begin(), found),
-                           allLetters.end());     // key --> end of vector
-    vector<char> my_line_2(allLetters.begin(), allLetters.begin() + distance(allLetters.begin(),
-                                                                               found));    // Beginning of vector --> key -1
-    my_line_1.insert(my_line_1.end(), my_line_2.begin(), my_line_2.end());      // Combine the two vector into one
-    auto found_crypt = find(my_line_1.begin(), my_line_1.end(), crypt);
-    return allLetters[size_t(distance(my_line_1.begin(), found_crypt))];       //The decrypted letter in the vector
+string associate_pw(const string &text, const struct Clef *clef) {
+    size_t idx = 0;
+    string newPw;
+    size_t lenPw = clef->longueur;
+    for (char letter: text) {
+        if (int(letter) >= 65 and int(letter) <= 90) {
+            newPw += clef->clef[idx];
+            idx++;
+        } else {
+            newPw += letter;
+        }
+        if (idx == lenPw) {
+            idx = 0;
+        }
+    }
+    return newPw;
 }
 
-string decrypt(string text, string mdp) {
+char associate_letter(const char &key, const char &crypt) {
+    int delta;
+    if (int(crypt) < int(key)){
+        delta = 91 - int(key) + int(crypt) - 64;
+
+    }else{
+        delta = int(crypt) - int(key)+1;
+    }
+    return char(64+delta);
+}
+
+string decrypt(const string &text, const string &mdp) {
     string res;
-    for (long unsigned int idx = 0; idx < text.length(); idx++) {  // parse the text with index
+    for (size_t idx = 0; idx < text.length(); idx++) {  // parse the text with index
         if (isalpha(mdp[idx])) {
             res += associate_letter(mdp[idx], text[idx]);   // associate a letter
         } else {
