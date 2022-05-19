@@ -26,12 +26,7 @@ struct Clef {
 };
 
 string decryptedText(const string &cypher, struct Clef *clef) {
-    /*string myMdp;
-    for (size_t idx = 0; idx < clef->longueur; idx++) {
-        myMdp.push_back(clef->clef[idx]);
-    }*/
-
-    string realPswd = associate_pw(cypher, clef);
+     string realPswd = associate_pw(cypher, clef);
 
     string decrypted = decrypt(cypher, realPswd);
 
@@ -69,20 +64,21 @@ void attack(const string &cypher, string &plain, const size_t &l) {
     Clef myKey{};   //Key considered as better candidat
     myKey.erreur = 100.0;
     for (size_t idx = 1; idx <= l; idx++) {
-        Clef *newKey = trouve_candidat(cypher, idx);
-        if (idx >=20){
-            string patternMyKey = findRepeatedString(myKey.clef);
-            cout << patternMyKey << endl;
-            string key;
-            if (!patternMyKey.empty()) {
-                for (size_t index = 0; idx < newKey->longueur; index++) {
-                    key.push_back(newKey->clef[index]);
+        Clef *newKey = new Clef(*trouve_candidat(cypher, idx));
+        if (idx >7  and myKey.clef[0] == newKey->clef[0]){
+            string tempKey, currentKey;
+            /*tempKey = tempKey.substr(0, newKey->longueur);
+            currentKey = currentKey.substr(0, myKey.longueur);*/
+            for (size_t index = 0; index < newKey->longueur; index++) {
+                if (index < myKey.longueur){
+                    currentKey.push_back(myKey.clef[index]);
                 }
-                size_t count = findOccurenceWord(key, patternMyKey);
-                if (count * patternMyKey.size() == key.size()) {
-                    cout<<"here" << endl;
-                    break;          //same pw
-                }
+                tempKey.push_back(newKey->clef[index]);
+            }
+            size_t count = findOccurenceWord(tempKey, currentKey);
+            if (count * currentKey.size() == tempKey.size()) {
+                delete newKey;
+                break;          //same pw
             }
 
         }
@@ -92,7 +88,7 @@ void attack(const string &cypher, string &plain, const size_t &l) {
             myKey.longueur = newKey->longueur;
         }
         else{
-            delete[] newKey;
+            delete newKey;
         }
     }
     decode(cypher, &myKey, plain);
@@ -242,7 +238,7 @@ string decrypt(const string &text, const string &mdp) {
     string res;
     for (size_t idx = 0; idx < text.length(); idx++) {  // parse the text with index
         if (isalpha(mdp[idx])) {
-            res += associate_letter(mdp[idx], text[idx]);   // associate a letter
+            res += char((((text[idx] - mdp[idx]) + 26) % 26) + 'A');
         } else {
             res += mdp[idx];
         }
