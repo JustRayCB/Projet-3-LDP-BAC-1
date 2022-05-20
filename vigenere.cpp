@@ -25,19 +25,11 @@ struct Clef {
     float erreur;
 };
 
-string decryptedText(const string &cypher, struct Clef *clef) {
-     string realPswd = associate_pw(cypher, clef);
-
-    string decrypted = decrypt(cypher, realPswd);
-
-    return decrypted;
-}
-
 void decode(const string &cypher, struct Clef *clef, string &plain) {
 
-    string decrypted = decryptedText(cypher, clef);
-
-    write_file(plain, decrypted, lines);
+    //string decrypted = decryptedText(cypher, clef);
+    writeFile(cypher, clef, plain, lines);
+    //write_file(plain, decrypted, lines);
 }
 
 struct Clef *trouve_candidat(const string &cypher, const size_t &l) {
@@ -46,16 +38,32 @@ struct Clef *trouve_candidat(const string &cypher, const size_t &l) {
     float error = 0;
     columns = divideText(cypher, l);    // Vector with the columns of the text
     size_t idx = 0;
-    for (string myString: columns) {   //Parse the vector and create a password with the most common letters in each col
-        tuple<char, float> res = (findMostOccurence(myString));
-        tempTable[idx] = transformLetter(get<0>(res));
-        idx++;
-        error += get<1>(res);
-    }
+    size_t realSize = 0;
     Clef *newClef = new Clef;
-    newClef->clef = tempTable;
-    newClef->longueur = l;
-    newClef->erreur = error / float(l);
+
+    for (string myString: columns) {   //Parse the vector and create a password with the most common letters in each col
+        if (!myString.empty()) {
+            tuple<char, float> res = (findMostOccurence(myString));
+            tempTable[idx] = transformLetter(get<0>(res));
+            idx++;
+            error += get<1>(res);
+            realSize ++;
+        }
+    }
+    if (realSize != l){
+        char *realTable = new char[realSize];
+        for (idx=0;idx<realSize;idx++){
+            realTable[idx] = tempTable[idx];
+        }
+        newClef->clef = realTable;
+        newClef->longueur = realSize;
+        newClef->erreur = error / float(realSize);
+    }
+    else {
+        newClef->clef = tempTable;
+        newClef->longueur = l;
+        newClef->erreur = error / float(l);
+    }
     return newClef;
 }
 
@@ -65,24 +73,23 @@ void attack(const string &cypher, string &plain, const size_t &l) {
     myKey.erreur = 100.0;
     for (size_t idx = 1; idx <= l; idx++) {
         Clef *newKey = new Clef(*trouve_candidat(cypher, idx));
-        if (idx >7  and myKey.clef[0] == newKey->clef[0]){
-            string tempKey, currentKey;
-            /*tempKey = tempKey.substr(0, newKey->longueur);
-            currentKey = currentKey.substr(0, myKey.longueur);*/
-            for (size_t index = 0; index < newKey->longueur; index++) {
-                if (index < myKey.longueur){
-                    currentKey.push_back(myKey.clef[index]);
-                }
-                tempKey.push_back(newKey->clef[index]);
-            }
-            size_t count = findOccurenceWord(tempKey, currentKey);
-            if (count * currentKey.size() == tempKey.size()) {
-                delete newKey;
-                break;          //same pw
-            }
-
-        }
         if (newKey->erreur < myKey.erreur) {    // useless to test a key that have a bigger error that the current key
+            if (idx >5  and myKey.clef[0] == newKey->clef[0]){  //maybe delete that if if it's too cheaty
+                string tempKey, currentKey;
+                for (size_t index = 0; index < newKey->longueur; index++) {
+                    if (index < myKey.longueur){
+                        currentKey.push_back(myKey.clef[index]);
+                    }
+                    tempKey.push_back(newKey->clef[index]);
+                }
+                string patterMyKey = findRepeatedString(currentKey);
+                size_t count = findOccurenceWord(tempKey, patterMyKey);
+                if (count * patterMyKey.size() == tempKey.size()) {
+                    delete newKey;
+                    break;          //same pw
+                }
+
+            }
             myKey.clef = newKey->clef;
             myKey.erreur = newKey->erreur;
             myKey.longueur = newKey->longueur;
@@ -113,7 +120,7 @@ size_t findOccurenceWord(const string &text, const string &word){
 string findRepeatedString(const string &text) {
     size_t lenText = text.size();
     size_t idx = 1;
-    while (idx < lenText / 2) {
+    while (idx <= lenText / 2) {
         string sub = text.substr(0, idx);
         size_t count = findOccurenceWord(text, sub);
         if (count * sub.size() == lenText) {
@@ -121,7 +128,7 @@ string findRepeatedString(const string &text) {
         }
         idx ++;
     }
-    return "";
+    return text;
 }
 
 vector<string> divideText(const string &cypher, const size_t &size) {
@@ -145,10 +152,10 @@ tuple<char, float> findMostOccurence(string &myString) {
             {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U',
              'V', 'W', 'X', 'Y', 'Z'});
     for (char& letter: allLetters){
-        size_t new_count = size_t(std::count(myString.begin(), myString.end(), letter)); //Freq of the letter in the string
-        if (new_count > count) {
+        size_t newCount = size_t(std::count(myString.begin(), myString.end(), letter)); //Freq of the letter in the string
+        if (newCount > count) {
             chosenLetter = letter;
-            count = new_count;
+            count = newCount;
         }
     }
     double error;
@@ -178,7 +185,7 @@ tuple<string, vector<size_t>> read_file(const string &filename) {
         string line;
         while (getline(read, line)) {
             line.erase(remove(line.begin(), line.end(), '\r'), line.end());
-            temp.append(line + " ");
+            temp.append(line);
             lengthPhrase.push_back(line.size());   // Push the length of line in the vector
         }
         read.close();
@@ -205,34 +212,41 @@ string associate_pw(const string &text, const string& pw) {
     return newPw;
 }
 
-string associate_pw(const string &text, const struct Clef *clef) {
-    size_t idx = 0;
-    string newPw;
+void writeFile(const string &text, const struct Clef *clef, const string &filename, vector<size_t> &length){
+    size_t idxMdp = 0;
     size_t lenPw = clef->longueur;
-    for (char letter: text) {
-        if (int(letter) >= 65 and int(letter) <= 90) {
-            newPw += clef->clef[idx];
-            idx++;
-        } else {
-            newPw += letter;
-        }
-        if (idx == lenPw) {
-            idx = 0;
+    ofstream file(filename, ios::out);
+    size_t idxLine = 0;
+    if (file.is_open()){
+        char decrypted;
+        for (const char &letter: text){
+            if (int(letter) >= 65 and int(letter) <= 90){
+                decrypted = char((((letter - clef->clef[idxMdp]) + 26) % 26) + 'A');
+                idxMdp++;
+            }else{
+                decrypted = letter;
+            }
+            if (idxMdp == lenPw){
+                idxMdp = 0;
+            }
+            if (idxLine == length[0]-1){
+                file << decrypted << endl;
+                length.erase(length.begin());
+                idxLine =0;
+            }
+            else{
+                file << decrypted;
+                idxLine++;
+            }
+            if (length[0] == 0){
+                file << endl;
+                length.erase(length.begin());
+
+            }
         }
     }
-    return newPw;
 }
 
-char associate_letter(const char &key, const char &crypt) {
-    int delta;
-    if (int(crypt) < int(key)){
-        delta = 91 - int(key) + int(crypt) - 64;
-
-    }else{
-        delta = int(crypt) - int(key)+1;
-    }
-    return char(64+delta);
-}
 
 string decrypt(const string &text, const string &mdp) {
     string res;
@@ -252,7 +266,7 @@ void write_file(const string &filename, string text, const vector<size_t> &lengt
         for (size_t idx: length) {    // While there is a data in the list we have  to write a line
             string phrase = text.substr(0, idx);    // text[:idx] to have only what we want to write
             file << phrase << endl;     // write in the file
-            text = text.substr(idx + 1, text.length());     // Remove the wrote part of the text
+            text = text.substr(idx, text.length());     // Remove the wrote part of the text
         }
     }
 }
