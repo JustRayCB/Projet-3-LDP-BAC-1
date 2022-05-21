@@ -104,7 +104,7 @@ string associate_pw(const string& text, const string& pw);
 
 string associate_pw(const string &text, const struct Clef *clef);
 
-void writeFile(const string &text, const struct Clef *clef, const string &filename, vector<size_t> &length);
+void writeFile(const string &text, const struct Clef *clef, const string &filename, const vector<size_t> &length);
 /**
  * * Decrypt a letter with the other
  *

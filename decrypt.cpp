@@ -23,7 +23,6 @@ int main(int argc, char *argv[]) {
     string nom_fichier_dechiffre = argv[3];
 
     tuple<string,vector<size_t>> to_decrypt = read_file(nom_fichier_chiffre);
-    lines = get<1>(to_decrypt);
     string real_password = associate_pw(get<0>(to_decrypt),mot_de_passe);
 
     string decrypted = decrypt(get<0>(to_decrypt), real_password);

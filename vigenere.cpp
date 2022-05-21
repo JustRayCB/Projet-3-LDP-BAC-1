@@ -44,10 +44,10 @@ struct Clef *trouve_candidat(const string &cypher, const size_t &l) {
     for (string myString: columns) {   //Parse the vector and create a password with the most common letters in each col
         if (!myString.empty()) {
             tuple<char, float> res = (findMostOccurence(myString));
-            tempTable[idx] = transformLetter(get<0>(res));
+            tempTable[idx] = char((int(get<0>(res)) - 69)%26 + 65 );
             idx++;
             error += get<1>(res);
-            realSize ++;
+            realSize++;
         }
     }
     if (realSize != l){
@@ -70,7 +70,7 @@ struct Clef *trouve_candidat(const string &cypher, const size_t &l) {
 
 void attack(const string &cypher, string &plain, const size_t &l) {
     Clef myKey{};   //Key considered as better candidat
-    myKey.erreur = 100.0;
+    myKey.erreur = 10.0;
     for (size_t idx = 1; idx <= l; idx++) {
         Clef *newKey = new Clef(*trouve_candidat(cypher, idx));
         if (newKey->erreur < myKey.erreur) {    // useless to test a key that have a bigger error that the current key
@@ -88,11 +88,11 @@ void attack(const string &cypher, string &plain, const size_t &l) {
                     delete newKey;
                     break;          //same pw
                 }
-
             }
             myKey.clef = newKey->clef;
             myKey.erreur = newKey->erreur;
             myKey.longueur = newKey->longueur;
+            delete newKey;
         }
         else{
             delete newKey;
@@ -134,7 +134,7 @@ string findRepeatedString(const string &text) {
 vector<string> divideText(const string &cypher, const size_t &size) {
     vector<string> column(size);
     size_t idx = 0;     //Index of the letter
-    for (char letter: cypher){
+    for (const char &letter: cypher){
         size_t columnIdx = idx%size;
         if (65 <= int(letter) and int(letter) <= 90){
             column[columnIdx].push_back(letter);
@@ -162,18 +162,6 @@ tuple<char, float> findMostOccurence(string &myString) {
     error = float(count) / float(size);
     error = abs(error - 0.17115);
     return {chosenLetter, error};
-}
-
-char transformLetter(char &letter) {
-    int delta = int(letter) - int('E');
-    if (delta > 0) {
-        return char(int('A') + delta);
-    }
-    if (delta < 0) {
-        return char(int('Z') + delta + 1);
-    } else {
-        return 'A';
-    }
 }
 
 
@@ -212,11 +200,12 @@ string associate_pw(const string &text, const string& pw) {
     return newPw;
 }
 
-void writeFile(const string &text, const struct Clef *clef, const string &filename, vector<size_t> &length){
+void writeFile(const string &text, const struct Clef *clef, const string &filename, const vector<size_t> &length){
     size_t idxMdp = 0;
     size_t lenPw = clef->longueur;
     ofstream file(filename, ios::out);
     size_t idxLine = 0;
+    size_t idxVector = 0;
     if (file.is_open()){
         char decrypted;
         for (const char &letter: text){
@@ -229,19 +218,19 @@ void writeFile(const string &text, const struct Clef *clef, const string &filena
             if (idxMdp == lenPw){
                 idxMdp = 0;
             }
-            if (idxLine == length[0]-1){
+            if (idxLine == length[idxVector]-1){
                 file << decrypted << endl;
-                length.erase(length.begin());
+                idxVector++;
                 idxLine =0;
             }
             else{
                 file << decrypted;
                 idxLine++;
             }
-            if (length[0] == 0){
+            if (length[idxVector] == 0){
                 file << endl;
-                length.erase(length.begin());
-
+                idxVector++;
+                //length.erase(length.begin());
             }
         }
     }
