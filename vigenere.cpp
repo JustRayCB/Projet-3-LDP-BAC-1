@@ -18,13 +18,6 @@
 
 using namespace std;
 
-
-struct Clef {
-    char *clef;
-    size_t longueur;
-    float erreur;
-};
-
 const string *File::getCypher() const {
     return &(get<0>(_lines));
 }
@@ -183,23 +176,6 @@ tuple<string, vector<size_t>> File::read_file(const string &filename) {
     return {temp, lengthPhrase};
 }
 
-string associate_pw(const string &text, const string& pw) {
-    size_t idx = 0;
-    string newPw;
-    size_t lenPw = pw.size();
-    for (char letter: text){
-        if (int(letter) >= 65 and int(letter) <= 90){
-            newPw+=pw[idx];
-            idx ++;
-        }else{
-            newPw += letter;
-        }
-        if (idx == lenPw){
-            idx = 0;
-        }
-    }
-    return newPw;
-}
 
 void File:: decode(const struct Clef *clef) const {
     size_t idxMdp = 0;
@@ -235,26 +211,3 @@ void File:: decode(const struct Clef *clef) const {
     }
 }
 
-
-string decrypt(const string &text, const string &mdp) {
-    string res;
-    for (size_t idx = 0; idx < text.length(); idx++) {  // parse the text with index
-        if (isalpha(mdp[idx])) {
-            res += char((((text[idx] - mdp[idx]) + 26) % 26) + 'A');
-        } else {
-            res += mdp[idx];
-        }
-    }
-    return res;
-}
-
-void write_file(const string &filename, string text, const vector<size_t> &length) {
-    ofstream file(filename, ios::out);
-    if (file.is_open()) {
-        for (size_t idx: length) {    // While there is a data in the list we have  to write a line
-            string phrase = text.substr(0, idx);    // text[:idx] to have only what we want to write
-            file << phrase << endl;     // write in the file
-            text = text.substr(idx, text.length());     // Remove the wrote part of the text
-        }
-    }
-}

@@ -21,6 +21,12 @@ public:
 
 };
 
+struct Clef {
+    char *clef;
+    size_t longueur;
+    float erreur;
+};
+
 /**
  * Dechiffre un message chiffré encodé à l'aide du chiffre de Vigenère et
  * d'une clé connue.
