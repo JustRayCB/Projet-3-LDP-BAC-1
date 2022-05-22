@@ -4,12 +4,22 @@
 #include <string>
 #include <vector>
 #include "tuple"
-using std::string;
-using  std::vector;
-using std::tuple;
 
 
-extern vector<size_t> lines;    //global variable of the length of the lines in the file
+class File{
+    std::string _filename;
+    std::string _plain;
+    std::tuple<std::string, std::vector<size_t>> _lines;
+public:
+    File(std::string  filename, std::string  plain);
+    static std::tuple<std::string, std::vector<size_t>> read_file(const std::string& filename);
+    void decode(const struct Clef *clef) const;
+    //std::vector<std::string> divideText(const size_t &size);
+    const std::string *getCypher()const;
+    const std::vector<size_t> *getLines()const;
+
+
+};
 
 /**
  * Dechiffre un message chiffré encodé à l'aide du chiffre de Vigenère et
@@ -20,7 +30,7 @@ extern vector<size_t> lines;    //global variable of the length of the lines in 
  * @param plain String qui contiendra le message déchiffré après l'appel
  * @return None
  */
-void decode(const string &cypher, struct Clef *clef, string &plain);
+void decode(const std::string &cypher, struct Clef *clef, std::string &plain);
 
 /**
  * Etant donné le message chiffré, renvoi une clé de type struct
@@ -30,7 +40,7 @@ void decode(const string &cypher, struct Clef *clef, string &plain);
  * @param l la longueur de la clé
  * @return A pointer to a struct Clef
  */
-struct Clef *trouve_candidat(const string &cypher, const size_t &l);
+struct Clef *trouve_candidat(const std::string &cypher, const size_t &l);
 
 /**
  * Déchiffre un message encodé à l'aide du chiffre de Vigenère sans avoir
@@ -41,7 +51,7 @@ struct Clef *trouve_candidat(const string &cypher, const size_t &l);
  * @param l Chiffre que l'utilisateur à choisi pour faire l'attaque du chiffre de Vigenere
  * @return None
  */
-void attack(const string &cypher, string &plain, const size_t &l);
+void attack(const File &myFile, const size_t &l);
 
 
 //      ****Function to find a candidate****
@@ -53,37 +63,22 @@ void attack(const string &cypher, string &plain, const size_t &l);
  * @param size Number of column in which we will divide the text
  * @return a vector which all the values are the different column of the divided text
  */
-vector<string> divideText(const string& cypher, const size_t &size);
+std::vector<std::string> divideText(const std::string& cypher, const size_t &size);
 
 /**
  * Find the most used alphabetic letter in a string
  * @param myString String we will analyze
  * @return A tuple with the most used character and it's error
  */
-tuple<char, float> findMostOccurence(string& myString);
+std::tuple<char, float> findMostOccurence(std::string& myString);
 
-/**
-* Transform the letter according to it's place in the alphabet compared with the place of the letter E
-* @param letter letter we will transform
-* @return the transformed character
-*/
-char transformLetter(char& letter);
 
-size_t findOccurenceWord(const string &text, const string &word);
+size_t findOccurenceWord(const std::string &text, const std::string &word);
 
-string findRepeatedString(const string &text);
+std::string findRepeatedString(const std::string &text);
 
 //      ****Use to decrypt****
 
-/**
- * Decrypt the text according to a struct clef without writing
- * the decrypted text in a file
- *
- * @param cypher Text we need to decrypt
- * @param clef Clef that contain the password to decrypt
- * @return The decrypted text
- */
-string decryptedText(const string &cypher, struct Clef *clef);
 
 /**
  * Function that read the file named filename and recover the lines and the length of these lines
@@ -91,7 +86,7 @@ string decryptedText(const string &cypher, struct Clef *clef);
  * @param filename the name of the file
  * @return tuple with the result of all lines of the file as a string and a vector with the length of the lines' file
  */
-tuple<string, vector<size_t>> read_file(const string& filename);
+std::tuple<std::string, std::vector<size_t>> read_file(const std::string& filename);
 
 /**
  * Function that will associate a password according to the length of text and the spaces in there
@@ -99,20 +94,11 @@ tuple<string, vector<size_t>> read_file(const string& filename);
  * @param pw Password to associate
  * @return the associated password as a string
  */
-string associate_pw(const string& text, const string& pw);
+std::string associate_pw(const std::string& text, const std::string& pw);
 
 
-string associate_pw(const string &text, const struct Clef *clef);
 
-void writeFile(const string &text, const struct Clef *clef, const string &filename, const vector<size_t> &length);
-/**
- * * Decrypt a letter with the other
- *
- * @param key Letter to decrypt the encrypted letter
- * @param crypt encrypted letter
- * @return The decrypted letter
- */
-char associate_letter(const char &key, const char &crypt);
+void writeFile(const std::string &text, const struct Clef *clef, const std::string &filename, const std::vector<size_t> &length);
 
 /**
  * Decrypt the text with the password
@@ -121,7 +107,7 @@ char associate_letter(const char &key, const char &crypt);
  * @param mdp Password
  * @return string decrypted
  */
-string decrypt(const string &text, const string &mdp);
+std::string decrypt(const std::string &text, const std::string &mdp);
 
 /**
  * Will write a text  line per line in a file
@@ -130,4 +116,4 @@ string decrypt(const string &text, const string &mdp);
  * @param text Text we want to write in the file
  * @param length List of the line's length to write in the file
  */
-void write_file(const string& filename,string text, const vector<size_t>& length);
+void write_file(const std::string& filename, std::string text, const std::vector<size_t>& length);

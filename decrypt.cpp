@@ -10,8 +10,7 @@
 #include <tuple>
 #include "vigenere.hpp"
 
-using namespace std;
-vector<size_t> lines;       //global Variable with the length of the lines in the file
+using namespace std; //global Variable with the length of the lines in the file
 
 int main(int argc, char *argv[]) {
     if (argc < 4) {
@@ -21,13 +20,13 @@ int main(int argc, char *argv[]) {
     string nom_fichier_chiffre = argv[1];
     string mot_de_passe = argv[2];
     string nom_fichier_dechiffre = argv[3];
+    File myFile = File(nom_fichier_chiffre, nom_fichier_dechiffre);
+    //tuple<string,vector<size_t>> to_decrypt = read_file(nom_fichier_chiffre);
+    string real_password = associate_pw(*myFile.getCypher(),mot_de_passe);
 
-    tuple<string,vector<size_t>> to_decrypt = read_file(nom_fichier_chiffre);
-    string real_password = associate_pw(get<0>(to_decrypt),mot_de_passe);
+    string decrypted = decrypt(*myFile.getCypher(), real_password);
 
-    string decrypted = decrypt(get<0>(to_decrypt), real_password);
-
-    write_file(nom_fichier_dechiffre, decrypted, get<1>(to_decrypt));
+    write_file(nom_fichier_dechiffre, decrypted, *myFile.getLines());
 
 
     return 0;

@@ -25,12 +25,14 @@ struct Clef {
     float erreur;
 };
 
-void decode(const string &cypher, struct Clef *clef, string &plain) {
-
-    //string decrypted = decryptedText(cypher, clef);
-    writeFile(cypher, clef, plain, lines);
-    //write_file(plain, decrypted, lines);
+const string *File::getCypher() const {
+    return &(get<0>(_lines));
 }
+const vector<size_t> *File::getLines() const {
+    return &(get<1>(_lines));
+}
+
+File::File(std::string filename, std::string plain):_filename(std::move(filename)), _plain(std::move(plain)), _lines(File::read_file(_filename)){}
 
 struct Clef *trouve_candidat(const string &cypher, const size_t &l) {
     char *tempTable = new char[l];
@@ -68,11 +70,11 @@ struct Clef *trouve_candidat(const string &cypher, const size_t &l) {
 }
 
 
-void attack(const string &cypher, string &plain, const size_t &l) {
+void attack(const File& myFile, const size_t &l) {
     Clef myKey{};   //Key considered as better candidat
     myKey.erreur = 10.0;
     for (size_t idx = 1; idx <= l; idx++) {
-        Clef *newKey = new Clef(*trouve_candidat(cypher, idx));
+        Clef *newKey = new Clef(*trouve_candidat(*myFile.getCypher(), idx));
         if (newKey->erreur < myKey.erreur) {    // useless to test a key that have a bigger error that the current key
             if (idx >5  and myKey.clef[0] == newKey->clef[0]){  //maybe delete that if if it's too cheaty
                 string tempKey, currentKey;
@@ -98,7 +100,7 @@ void attack(const string &cypher, string &plain, const size_t &l) {
             delete newKey;
         }
     }
-    decode(cypher, &myKey, plain);
+    myFile.decode(&myKey);
 
 }
 
@@ -147,25 +149,25 @@ vector<string> divideText(const string &cypher, const size_t &size) {
 tuple<char, float> findMostOccurence(string &myString) {
     size_t count = 0;
     size_t size = myString.size();
-    char chosenLetter = ' ';
+    char *chosenLetter = nullptr;
     vector<char> allLetters(
             {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U',
              'V', 'W', 'X', 'Y', 'Z'});
     for (char& letter: allLetters){
         size_t newCount = size_t(std::count(myString.begin(), myString.end(), letter)); //Freq of the letter in the string
         if (newCount > count) {
-            chosenLetter = letter;
+            chosenLetter =&letter;
             count = newCount;
         }
     }
     double error;
     error = float(count) / float(size);
     error = abs(error - 0.17115);
-    return {chosenLetter, error};
+    return {*chosenLetter, error};
 }
 
 
-tuple<string, vector<size_t>> read_file(const string &filename) {
+tuple<string, vector<size_t>> File::read_file(const string &filename) {
     string temp;
     vector<size_t> lengthPhrase;  // initiate the vector that will stock the length of the line
     fstream read(filename, ios::in);
@@ -189,8 +191,7 @@ string associate_pw(const string &text, const string& pw) {
         if (int(letter) >= 65 and int(letter) <= 90){
             newPw+=pw[idx];
             idx ++;
-        }
-        else{
+        }else{
             newPw += letter;
         }
         if (idx == lenPw){
@@ -200,15 +201,15 @@ string associate_pw(const string &text, const string& pw) {
     return newPw;
 }
 
-void writeFile(const string &text, const struct Clef *clef, const string &filename, const vector<size_t> &length){
+void File:: decode(const struct Clef *clef) const {
     size_t idxMdp = 0;
     size_t lenPw = clef->longueur;
-    ofstream file(filename, ios::out);
+    ofstream file(_plain, ios::out);
     size_t idxLine = 0;
     size_t idxVector = 0;
     if (file.is_open()){
         char decrypted;
-        for (const char &letter: text){
+        for (const char &letter: get<0>(_lines)){
             if (int(letter) >= 65 and int(letter) <= 90){
                 decrypted = char((((letter - clef->clef[idxMdp]) + 26) % 26) + 'A');
                 idxMdp++;
@@ -218,19 +219,17 @@ void writeFile(const string &text, const struct Clef *clef, const string &filena
             if (idxMdp == lenPw){
                 idxMdp = 0;
             }
-            if (idxLine == length[idxVector]-1){
+            if (idxLine == get<1>(_lines)[idxVector]-1){
                 file << decrypted << endl;
                 idxVector++;
                 idxLine =0;
-            }
-            else{
+            }else{
                 file << decrypted;
                 idxLine++;
             }
-            if (length[idxVector] == 0){
+            if (get<1>(_lines)[idxVector] == 0){
                 file << endl;
                 idxVector++;
-                //length.erase(length.begin());
             }
         }
     }
