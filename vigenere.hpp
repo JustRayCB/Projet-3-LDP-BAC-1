@@ -15,8 +15,7 @@ public:
     static std::tuple<std::string, std::vector<size_t>> read_file(const std::string& filename);
     void decode(const struct Clef *clef) const;
     //std::vector<std::string> divideText(const size_t &size);
-    const std::string *getCypher()const;
-    const std::vector<size_t> *getLines()const;
+    std::vector<std::string> divideText(const size_t &size) const;
 
 
 };
@@ -35,7 +34,7 @@ struct Clef {
  * @param l la longueur de la clé
  * @return A pointer to a struct Clef
  */
-struct Clef *trouve_candidat(const std::string &cypher, const size_t &l);
+struct Clef *trouve_candidat(const File &myFile, const size_t &l);
 
 /**
  * Déchiffre un message encodé à l'aide du chiffre de Vigenère sans avoir
@@ -51,14 +50,6 @@ void attack(const File &myFile, const size_t &l);
 
 //      ****Function to find a candidate****
 
-/**
- * Divide a text in a certain number of columns
- *
- * @param cypher text we will divise
- * @param size Number of column in which we will divide the text
- * @return a vector which all the values are the different column of the divided text
- */
-std::vector<std::string> divideText(const std::string& cypher, const size_t &size);
 
 /**
  * Find the most used alphabetic letter in a string

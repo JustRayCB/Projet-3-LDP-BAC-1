@@ -18,20 +18,14 @@
 
 using namespace std;
 
-const string *File::getCypher() const {
-    return &(get<0>(_lines));
-}
-const vector<size_t> *File::getLines() const {
-    return &(get<1>(_lines));
-}
 
 File::File(std::string filename, std::string plain):_filename(std::move(filename)), _plain(std::move(plain)), _lines(File::read_file(_filename)){}
 
-struct Clef *trouve_candidat(const string &cypher, const size_t &l) {
+struct Clef *trouve_candidat(const File &myFile, const size_t &l) {
     char *tempTable = new char[l];
     vector<string> columns;
     float error = 0;
-    columns = divideText(cypher, l);    // Vector with the columns of the text
+    columns = myFile.divideText(l);    // Vector with the columns of the text
     size_t idx = 0;
     size_t realSize = 0;
     Clef *newClef = new Clef;
@@ -53,8 +47,7 @@ struct Clef *trouve_candidat(const string &cypher, const size_t &l) {
         newClef->clef = realTable;
         newClef->longueur = realSize;
         newClef->erreur = error / float(realSize);
-    }
-    else {
+    }else {
         newClef->clef = tempTable;
         newClef->longueur = l;
         newClef->erreur = error / float(l);
@@ -67,7 +60,7 @@ void attack(const File& myFile, const size_t &l) {
     Clef myKey{};   //Key considered as better candidat
     myKey.erreur = 10.0;
     for (size_t idx = 1; idx <= l; idx++) {
-        Clef *newKey = new Clef(*trouve_candidat(*myFile.getCypher(), idx));
+        Clef *newKey = new Clef(*trouve_candidat(myFile, idx));
         if (newKey->erreur < myKey.erreur) {    // useless to test a key that have a bigger error that the current key
             if (idx >5  and myKey.clef[0] == newKey->clef[0]){  //maybe delete that if if it's too cheaty
                 string tempKey, currentKey;
@@ -126,10 +119,10 @@ string findRepeatedString(const string &text) {
     return text;
 }
 
-vector<string> divideText(const string &cypher, const size_t &size) {
+vector<string> File::divideText(const size_t &size) const{
     vector<string> column(size);
     size_t idx = 0;     //Index of the letter
-    for (const char &letter: cypher){
+    for (const char &letter: get<0>(_lines)){
         size_t columnIdx = idx%size;
         if (65 <= int(letter) and int(letter) <= 90){
             column[columnIdx].push_back(letter);

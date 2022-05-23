@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
     newClef.clef = mdpTable;
 
     myFile.decode(&newClef);
-    delete newClef.clef;
+    delete[] newClef.clef;
     return 0;
 }
 
