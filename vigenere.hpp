@@ -87,3 +87,9 @@ uint_fast32_t findOccurenceWord(const std::string &text, const std::string &word
  */
 std::string findRepeatedString(const std::string &text);
 
+/**
+ * Transfrom the letter according it's position to E
+ * @param letter alphabetic letter
+ * @return a char
+ */
+char transformLetter(char &letter);

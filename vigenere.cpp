@@ -96,7 +96,7 @@ struct Clef *trouveCandidat(const File &myFile, const uint_fast32_t &l) {
     for (string &myString: columns) {   //Parse the vector and create a password with the most common letters in each col
         if (!myString.empty()) {
             tuple<char, float> res = (findMostOccurence(myString));
-            tempTable[idx] = char((int(get<0>(res)) - 69)%26 + 65 );
+            tempTable[idx] = transformLetter(get<0>(res));
             idx++;
             error += get<1>(res);
             realSize++;
@@ -204,4 +204,14 @@ tuple<char, float> findMostOccurence(const string &myString) {
 }
 
 
-
+char transformLetter(char &letter) {
+    int delta = int(letter) - int('E');
+    if (delta > 0) {
+        return char(int('A') + delta);
+    }
+    if (delta < 0) {
+        return char(int('Z') + delta + 1);
+    } else {
+        return 'A';
+    }
+}
