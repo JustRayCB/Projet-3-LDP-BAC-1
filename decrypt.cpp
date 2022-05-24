@@ -17,16 +17,16 @@ int main(int argc, char *argv[]) {
         cout << "Utilisation: ./decrypt <nom_fichier_chiffre> <mot_de_passe> <nom_fichier_dechiffre>" << endl;
         return 1;
     }
-    string nom_fichier_chiffre = argv[1];
-    string mot_de_passe = argv[2];
-    string nom_fichier_dechiffre = argv[3];
-    File myFile = File(nom_fichier_chiffre, nom_fichier_dechiffre);
-    Clef newClef{};
-    newClef.longueur = mot_de_passe.size();
+    string nomFichierChiffre = argv[1];
+    string motDePasse = argv[2];
+    string nomFichierDechiffre = argv[3];
+    File myFile = File(nomFichierChiffre, nomFichierDechiffre);
+    Clef newClef{};     // make the password a struct Clef
+    newClef.longueur = motDePasse.size();
     newClef.erreur = 0.0;
     char *mdpTable = new char[newClef.longueur];
     for (size_t idx = 0; idx < newClef.longueur; idx++){
-        mdpTable[idx] = mot_de_passe[idx];
+        mdpTable[idx] = motDePasse[idx];
     }
     newClef.clef = mdpTable;
 
